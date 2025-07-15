@@ -11,6 +11,7 @@
 // Include the SSD1306 OLED driver header
 #include "ssd1306_i2c.h"
 
+
 // --- WICHTIG: Deklariere die C++ FreeRTOS Task Funktion als extern "C" ---
 // Das teilt dem C-Compiler mit, dass diese Funktion C-Linkage hat.
 extern void vBlinkTaskCpp(void *pvParameters);

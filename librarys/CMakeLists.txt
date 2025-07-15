@@ -9,3 +9,5 @@ add_subdirectory(ssd1306_i2c)
 
 # Fügen Sie hier weitere Bibliotheken hinzu, die Sie später in diesem Ordner erstellen
 # add_subdirectory(name_der_neuen_bibliothek)
+
+add_subdirectory(blink)
