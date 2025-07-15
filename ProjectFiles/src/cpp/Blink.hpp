@@ -1,4 +1,3 @@
-// /home/hexzhen3x7/Entwicklungen/FusionRTS_Core-Pico/ProjectFiles/src/cpp/Blink.hpp
 #ifndef BLINK_HPP
 #define BLINK_HPP
 

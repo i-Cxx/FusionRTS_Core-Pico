@@ -1,5 +1,3 @@
-// ProjectFiles/src/cpp/blink_task_wrapper.cpp
-
 #include "Blink.hpp"
 #include "FreeRTOS.h" // For FreeRTOS types like TaskHandle_t
 #include "task.h"     // For vTaskDelay, etc.

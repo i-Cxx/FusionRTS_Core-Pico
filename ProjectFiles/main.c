@@ -1,11 +1,9 @@
-// ProjectFiles/main.c
-
 #include <FreeRTOS.h>
 #include <task.h>
 #include <stdio.h>
 #include "pico/stdlib.h"
-#include "hardware/i2c.h"   // Notwendig fÃ¼r I2C-Initialisierung
-#include "hardware/gpio.h"  // Notwendig fÃ¼r GPIO-Funktionen
+#include "hardware/i2c.h"   // Notwendig fÃƒÂ¼r I2C-Initialisierung
+#include "hardware/gpio.h"  // Notwendig fÃƒÂ¼r GPIO-Funktionen
 
 // Include the LCD 1602 driver header
 #include "lcd_1602_i2c.h"
@@ -21,8 +19,8 @@ extern void vBlinkTaskCpp(void *pvParameters);
 // --- LED Task Configuration ---
 #define LED_PIN PICO_DEFAULT_LED_PIN // This is now used by the C++ wrapper task
 #define BLINK_TASK_PRIORITY (tskIDLE_PRIORITY + 1)
-// BLINK_DELAY_MS wird jetzt in der C++-Task selbst verwaltet, oder du könntest es über pvParameters übergeben.
-// Hier wird es nicht mehr direkt in main.c für vBlinkTask benötigt.
+// BLINK_DELAY_MS wird jetzt in der C++-Task selbst verwaltet, oder du kÃ¶nntest es Ã¼ber pvParameters Ã¼bergeben.
+// Hier wird es nicht mehr direkt in main.c fÃ¼r vBlinkTask benÃ¶tigt.
 
 
 // --- LCD 1602 Task Configuration ---
@@ -164,20 +162,20 @@ int main() {
 
     // Create the LED blink task using the C++ wrapper function
     // We pass NULL as parameters, as the LED pin is defined inside the C++ wrapper task.
-    if (xTaskCreate(vBlinkTaskCpp, "BlinkTaskCpp", configMINIMAL_STACK_SIZE, NULL, BLINK_TASK_PRIORITY, NULL) != pdPASS) {
+    if (xTaskCreate(vBlinkTaskCpp, "BlinkTaskCpp", configMINIMAL_STACK_SIZE * 3, NULL, BLINK_TASK_PRIORITY, NULL) != pdPASS) { // <- HIER GEÄNDERT
         printf("Error: BlinkTaskCpp could not be created!\n");
         while (1) {}
     }
 
     // Create the LCD 1602 task
-    if (xTaskCreate(vLcd1602Task, "Lcd1602Task", configMINIMAL_STACK_SIZE * 2, NULL, LCD1602_TASK_PRIORITY, NULL) != pdPASS) {
+    if (xTaskCreate(vLcd1602Task, "Lcd1602Task", configMINIMAL_STACK_SIZE * 6, NULL, LCD1602_TASK_PRIORITY, NULL) != pdPASS) { // <- HIER GEÄNDERT
         printf("Error: Lcd1602Task could not be created!\n");
         while (1) {}
     }
 
     // Create the SSD1306 OLED task
     // SSD1306 might need a larger stack due to frame buffer operations and string handling
-    if (xTaskCreate(vSsd1306Task, "Ssd1306Task", configMINIMAL_STACK_SIZE * 4, NULL, SSD1306_TASK_PRIORITY, NULL) != pdPASS) {
+    if (xTaskCreate(vSsd1306Task, "Ssd1306Task", configMINIMAL_STACK_SIZE * 16, NULL, SSD1306_TASK_PRIORITY, NULL) != pdPASS) { // <- HIER GEÄNDERT
         printf("Error: Ssd1306Task could not be created!\n");
         while (1) {}
     }

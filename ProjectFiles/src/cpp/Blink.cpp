@@ -1,4 +1,3 @@
-// /home/hexzhen3x7/Entwicklungen/FusionRTS_Core-Pico/ProjectFiles/src/cpp/Blink.cpp
 #include "Blink.hpp"
 #include "pico/stdlib.h" // Make sure this is included for SDK functions
 
