@@ -5,9 +5,15 @@
 # KEINE Quelldateien von Bibliotheken wie lcd_1602_i2c.c oder ssd1306_i2c.c hier auflisten!
 add_executable(fusioncoreos
     main.c
+    src/cpp/Blink.cpp
+    src/cpp/blink_task_wrapper.cpp
     # Fügen Sie hier weitere .c/.cpp-Dateien hinzu, die Sie selbst für Ihre Anwendung geschrieben haben
     # Beispiel: my_app_logic.c
 )
+target_include_directories(fusioncoreos PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/cpp
+)
+
 
 # Verknüpfen Sie Ihr ausführbares Programm mit allen benötigten Bibliotheken.
 target_link_libraries(fusioncoreos

@@ -1,31 +1,28 @@
+// ProjectFiles/main.c
+
 #include <FreeRTOS.h>
 #include <task.h>
 #include <stdio.h>
 #include "pico/stdlib.h"
-#include "hardware/i2c.h"   // Notwendig für I2C-Initialisierung
-#include "hardware/gpio.h"  // Notwendig für GPIO-Funktionen
-
-
-
+#include "hardware/i2c.h"   // Notwendig fÃ¼r I2C-Initialisierung
+#include "hardware/gpio.h"  // Notwendig fÃ¼r GPIO-Funktionen
 
 // Include the LCD 1602 driver header
 #include "lcd_1602_i2c.h"
 
-
-
 // Include the SSD1306 OLED driver header
 #include "ssd1306_i2c.h"
 
-
-
-
+// --- WICHTIG: Deklariere die C++ FreeRTOS Task Funktion als extern "C" ---
+// Das teilt dem C-Compiler mit, dass diese Funktion C-Linkage hat.
+extern void vBlinkTaskCpp(void *pvParameters);
 
 
 // --- LED Task Configuration ---
-#define LED_PIN PICO_DEFAULT_LED_PIN
+#define LED_PIN PICO_DEFAULT_LED_PIN // This is now used by the C++ wrapper task
 #define BLINK_TASK_PRIORITY (tskIDLE_PRIORITY + 1)
-#define BLINK_DELAY_MS 500
-
+// BLINK_DELAY_MS wird jetzt in der C++-Task selbst verwaltet, oder du könntest es über pvParameters übergeben.
+// Hier wird es nicht mehr direkt in main.c für vBlinkTask benötigt.
 
 
 // --- LCD 1602 Task Configuration ---
@@ -39,20 +36,12 @@
 lcd_1602_i2c_t my_lcd1602;
 
 
-
-
 // --- SSD1306 OLED Task Configuration ---
 #define SSD1306_TASK_PRIORITY (tskIDLE_PRIORITY + 3) // Even higher priority
 #define SSD1306_I2C_INSTANCE    i2c0    // Using the same i2c0 instance
 #define SSD1306_I2C_SDA_PIN     4       // Same SDA pin as LCD1602
 #define SSD1306_I2C_SCL_PIN     5       // Same SCL pin as LCD1602
 #define SSD1306_OLED_ADDR       0x3C    // Standard I2C address for SSD1306 (can be 0x3D)
-
-
-
-
-
-
 
 
 // Frame buffer for the SSD1306 display
@@ -65,29 +54,7 @@ struct render_area ssd1306_full_frame_area = {
 };
 
 
-
-
-
-
-// --- TASKS - FUNCTIONS ---
-
-// --- Task function to blink the LED ---
-void vBlinkTask(void *pvParameters) {
-    gpio_init(LED_PIN);
-    gpio_set_dir(LED_PIN, GPIO_OUT);
-
-    for (;;) {
-        gpio_put(LED_PIN, 1);
-        printf("LED an!\n");
-        vTaskDelay(pdMS_TO_TICKS(BLINK_DELAY_MS));
-
-        gpio_put(LED_PIN, 0);
-        printf("LED aus!\n");
-        vTaskDelay(pdMS_TO_TICKS(BLINK_DELAY_MS));
-    }
-}
-
-
+// --- TASKS - FUNCTIONS (Non-LED) ---
 
 // --- Task function to control the LCD 1602 ---
 void vLcd1602Task(void *pvParameters) {
@@ -175,12 +142,7 @@ void vSsd1306Task(void *pvParameters) {
     }
 }
 
- // --- END OF TASKS - FUNCTIONS ---
-
-
-
-// --- Main function ---
-
+// --- END OF TASKS - FUNCTIONS ---
 
 
 // --- Main function of the program ---
@@ -200,9 +162,10 @@ int main() {
     printf("Shared I2C0 initialized on SDA: %d, SCL: %d\n", LCD1602_I2C_SDA_PIN, LCD1602_I2C_SCL_PIN);
 
 
-    // Create the LED blink task
-    if (xTaskCreate(vBlinkTask, "BlinkTask", configMINIMAL_STACK_SIZE, NULL, BLINK_TASK_PRIORITY, NULL) != pdPASS) {
-        printf("Error: BlinkTask could not be created!\n");
+    // Create the LED blink task using the C++ wrapper function
+    // We pass NULL as parameters, as the LED pin is defined inside the C++ wrapper task.
+    if (xTaskCreate(vBlinkTaskCpp, "BlinkTaskCpp", configMINIMAL_STACK_SIZE, NULL, BLINK_TASK_PRIORITY, NULL) != pdPASS) {
+        printf("Error: BlinkTaskCpp could not be created!\n");
         while (1) {}
     }
 
