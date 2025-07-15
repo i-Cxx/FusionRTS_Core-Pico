@@ -1,10 +1,10 @@
 #include "Blink.hpp"
-#include "pico/stdlib.h" // Make sure this is included for SDK functions
+#include "pico/stdlib.h" // Includes SDK functions like gpio_init, gpio_set_dir, gpio_put, sleep_ms
 
 Blink::Blink(uint gpioPin) :
     _gpioPin(gpioPin),
     _currentState(false) { // Initialize with LED off state
-    // Constructor primarily sets up the pin number
+    // Constructor just sets up the pin number
 }
 
 void Blink::init() {
@@ -20,9 +20,14 @@ void Blink::toggle() {
 
 void Blink::blink_n_times(int count, unsigned long delay_ms) {
     for (int i = 0; i < count; ++i) {
-        toggle();
+        toggle(); // Turn LED on (or off)
         sleep_ms(delay_ms);
-        toggle();
+        toggle(); // Turn LED off (or on)
         sleep_ms(delay_ms);
     }
+    // After 'n' blinks, the LED will be in the same state it was before the function call.
+    // If you always want it OFF at the end, you could add:
+    // if (_currentState) {
+    //     toggle();
+    // }
 }

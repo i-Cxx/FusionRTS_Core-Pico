@@ -2,8 +2,8 @@
 #include <task.h>
 #include <stdio.h>
 #include "pico/stdlib.h"
-#include "hardware/i2c.h"   // Notwendig fÃƒÂ¼r I2C-Initialisierung
-#include "hardware/gpio.h"  // Notwendig fÃƒÂ¼r GPIO-Funktionen
+#include "hardware/i2c.h"   // Required for I2C initialization
+#include "hardware/gpio.h"  // Required for GPIO functions
 
 // Include the LCD 1602 driver header
 #include "lcd_1602_i2c.h"
@@ -12,16 +12,24 @@
 #include "ssd1306_i2c.h"
 
 
-// --- WICHTIG: Deklariere die C++ FreeRTOS Task Funktion als extern "C" ---
-// Das teilt dem C-Compiler mit, dass diese Funktion C-Linkage hat.
+// --- IMPORTANT: Declare the C++ FreeRTOS Task Function as extern "C" ---
+// In a C file, this extern "C" block is needed if the function
+// is defined in a C++ file and has C linkage.
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern void vBlinkTaskCpp(void *pvParameters);
+#ifdef __cplusplus
+}
+#endif
 
 
 // --- LED Task Configuration ---
-#define LED_PIN PICO_DEFAULT_LED_PIN // This is now used by the C++ wrapper task
+// These are the specific GPIO pins you want to use
+#define MY_CUSTOM_LED_PIN 25 // Typically the onboard LED on the Pico
+#define WARN_LED 16          // Your specific GPIO16 for the external LED
+
 #define BLINK_TASK_PRIORITY (tskIDLE_PRIORITY + 1)
-// BLINK_DELAY_MS wird jetzt in der C++-Task selbst verwaltet, oder du kÃ¶nntest es Ã¼ber pvParameters Ã¼bergeben.
-// Hier wird es nicht mehr direkt in main.c fÃ¼r vBlinkTask benÃ¶tigt.
 
 
 // --- LCD 1602 Task Configuration ---
@@ -127,6 +135,9 @@ void vSsd1306Task(void *pvParameters) {
     for (;;) {
         // Clear the "Loading..." line (assuming it's on page 1 or 5 depending on display height)
         int loading_text_y_offset = (SSD1306_HEIGHT == 64) ? 40 : 8;
+        // This memset might clear more than just the text, be careful.
+        // It clears a whole row/page-width based on the start_page.
+        // Consider a more targeted clear or redraw of the specific text area.
         memset(ssd1306_frame_buffer + (loading_text_y_offset / SSD1306_PAGE_HEIGHT) * SSD1306_WIDTH, 0, SSD1306_WIDTH);
         ssd1306_write_string(ssd1306_frame_buffer, 0, loading_text_y_offset, "Loading...");
 
@@ -162,21 +173,27 @@ int main() {
 
 
     // Create the LED blink task using the C++ wrapper function
-    // We pass NULL as parameters, as the LED pin is defined inside the C++ wrapper task.
-    if (xTaskCreate(vBlinkTaskCpp, "BlinkTaskCpp", configMINIMAL_STACK_SIZE * 3, NULL, BLINK_TASK_PRIORITY, NULL) != pdPASS) { // <- HIER GEÄNDERT
-        printf("Error: BlinkTaskCpp could not be created!\n");
+    // We pass the GPIO pin as parameters to the task.
+    if (xTaskCreate(vBlinkTaskCpp, "BlinkTask_LED25", configMINIMAL_STACK_SIZE * 3, (void*)MY_CUSTOM_LED_PIN, BLINK_TASK_PRIORITY, NULL) != pdPASS) {
+        printf("Error: BlinkTask_LED25 could not be created!\n");
         while (1) {}
     }
 
+    if (xTaskCreate(vBlinkTaskCpp, "BlinkTask_WARNLED16", configMINIMAL_STACK_SIZE * 3, (void*)WARN_LED, BLINK_TASK_PRIORITY, NULL) != pdPASS) {
+        printf("Error: BlinkTask_WARNLED16 could not be created!\n");
+        while (1) {}
+    }
+
+
     // Create the LCD 1602 task
-    if (xTaskCreate(vLcd1602Task, "Lcd1602Task", configMINIMAL_STACK_SIZE * 6, NULL, LCD1602_TASK_PRIORITY, NULL) != pdPASS) { // <- HIER GEÄNDERT
+    if (xTaskCreate(vLcd1602Task, "Lcd1602Task", configMINIMAL_STACK_SIZE * 6, NULL, LCD1602_TASK_PRIORITY, NULL) != pdPASS) {
         printf("Error: Lcd1602Task could not be created!\n");
         while (1) {}
     }
 
     // Create the SSD1306 OLED task
     // SSD1306 might need a larger stack due to frame buffer operations and string handling
-    if (xTaskCreate(vSsd1306Task, "Ssd1306Task", configMINIMAL_STACK_SIZE * 16, NULL, SSD1306_TASK_PRIORITY, NULL) != pdPASS) { // <- HIER GEÄNDERT
+    if (xTaskCreate(vSsd1306Task, "Ssd1306Task", configMINIMAL_STACK_SIZE * 16, NULL, SSD1306_TASK_PRIORITY, NULL) != pdPASS) {
         printf("Error: Ssd1306Task could not be created!\n");
         while (1) {}
     }
@@ -185,7 +202,7 @@ int main() {
     vTaskStartScheduler();
 
     printf("Error: Scheduler terminated!\n");
-    for (;;) {}
+    for (;;) {} // Should never be reached
 
     return 0;
 }
